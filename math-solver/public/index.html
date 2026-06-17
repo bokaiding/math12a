@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="midnight">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Solver</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+
+<style>
+/* ── THEMES ─────────────────────────────────────── */
+:root { --radius:16px; --radius-sm:10px; --transition:0.25s ease; }
+
+[data-theme="midnight"] {
+  --bg:#0b0c10; --surface:#13151a; --surface-2:#1b1e26;
+  --border:#2a2e3d; --border-soft:#1e2130;
+  --text:#e6e8f0; --text-muted:#6b7191; --text-dim:#9ba3c0;
+  --accent:#8b7cf8; --accent-2:#c084fc; --accent-glow:rgba(139,124,248,0.18);
+  --step-num-bg:rgba(139,124,248,0.15); --step-num:#a99ef9;
+  --answer-bg:linear-gradient(135deg,rgba(139,124,248,0.12),rgba(192,132,252,0.08));
+  --answer-border:#8b7cf8; --answer-text:#c4bbff;
+  --error-bg:rgba(248,113,113,0.08); --error-border:rgba(248,113,113,0.3); --error-text:#f87171;
+  --katex-color:#d4cfff;
+}
+[data-theme="parchment"] {
+  --bg:#f5f0e8; --surface:#faf7f2; --surface-2:#f0ebe0;
+  --border:#ddd5c4; --border-soft:#e8e0d0;
+  --text:#2c2416; --text-muted:#8a7a62; --text-dim:#5c4f3a;
+  --accent:#b5602a; --accent-2:#7c3d1a; --accent-glow:rgba(181,96,42,0.12);
+  --step-num-bg:rgba(181,96,42,0.12); --step-num:#b5602a;
+  --answer-bg:linear-gradient(135deg,rgba(181,96,42,0.08),rgba(124,61,26,0.05));
+  --answer-border:#b5602a; --answer-text:#7c3d1a;
+  --error-bg:rgba(220,38,38,0.06); --error-border:rgba(220,38,38,0.25); --error-text:#b91c1c;
+  --katex-color:#6b3a1f;
+}
+[data-theme="ocean"] {
+  --bg:#030d1a; --surface:#071424; --surface-2:#0d1f35;
+  --border:#1a3050; --border-soft:#0f2040;
+  --text:#d0e8f5; --text-muted:#4a7a9b; --text-dim:#7aafc8;
+  --accent:#38bdf8; --accent-2:#22d3ee; --accent-glow:rgba(56,189,248,0.15);
+  --step-num-bg:rgba(56,189,248,0.12); --step-num:#38bdf8;
+  --answer-bg:linear-gradient(135deg,rgba(56,189,248,0.10),rgba(34,211,238,0.06));
+  --answer-border:#38bdf8; --answer-text:#7dd3fc;
+  --error-bg:rgba(248,113,113,0.08); --error-border:rgba(248,113,113,0.3); --error-text:#f87171;
+  --katex-color:#a8dff7;
+}
+[data-theme="chalk"] {
+  --bg:#1c1c1e; --surface:#252527; --surface-2:#2e2e30;
+  --border:#3a3a3c; --border-soft:#303032;
+  --text:#f0efed; --text-muted:#6e6e73; --text-dim:#aeaeb2;
+  --accent:#ffd60a; --accent-2:#ff9f0a; --accent-glow:rgba(255,214,10,0.12);
+  --step-num-bg:rgba(255,214,10,0.10); --step-num:#ffd60a;
+  --answer-bg:linear-gradient(135deg,rgba(255,214,10,0.08),rgba(255,159,10,0.05));
+  --answer-border:#ffd60a; --answer-text:#ffd60a;
+  --error-bg:rgba(255,69,58,0.08); --error-border:rgba(255,69,58,0.3); --error-text:#ff453a;
+  --katex-color:#ffe566;
+}
+
+/* ── BASE ────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg); color:var(--text);
+  min-height:100vh; display:flex; flex-direction:column;
+  align-items:center; padding:32px 20px 60px;
+  transition:background var(--transition),color var(--transition);
+}
+
+/* ── THEME BAR ───────────────────────────────────── */
+.theme-bar{
+  display:flex; gap:8px; margin-bottom:28px;
+  background:var(--surface); border:1px solid var(--border);
+  padding:6px; border-radius:50px;
+}
+.theme-dot{
+  width:22px; height:22px; border-radius:50%; cursor:pointer;
+  transition:transform 0.2s,box-shadow 0.2s; border:2px solid transparent;
+}
+.theme-dot:hover{transform:scale(1.15);}
+.theme-dot.active{border-color:var(--text);box-shadow:0 0 0 2px var(--accent);}
+.theme-dot[data-t="midnight"]{background:radial-gradient(circle at 40% 40%,#8b7cf8,#0b0c10);}
+.theme-dot[data-t="parchment"]{background:radial-gradient(circle at 40% 40%,#b5602a,#f5f0e8);}
+.theme-dot[data-t="ocean"]{background:radial-gradient(circle at 40% 40%,#38bdf8,#030d1a);}
+.theme-dot[data-t="chalk"]{background:radial-gradient(circle at 40% 40%,#ffd60a,#1c1c1e);}
+
+/* ── LAYOUT ──────────────────────────────────────── */
+.wrap{width:100%;max-width:620px;}
+header{text-align:center;margin-bottom:28px;}
+.brand{
+  font-family:'Lora',serif; font-size:36px; font-weight:600; letter-spacing:-1px;
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+}
+.tagline{font-size:13px;color:var(--text-muted);margin-top:6px;font-style:italic;font-family:'Lora',serif;}
+
+.card{
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:26px; margin-bottom:14px;
+  transition:background var(--transition),border-color var(--transition);
+}
+.field-label{
+  display:block; font-size:10px; font-weight:600;
+  letter-spacing:1.2px; text-transform:uppercase;
+  color:var(--text-muted); margin-bottom:10px;
+}
+textarea{
+  width:100%; background:var(--surface-2); border:1.5px solid var(--border);
+  border-radius:var(--radius-sm); color:var(--text);
+  font-family:'Lora',serif; font-size:16px; line-height:1.65;
+  padding:16px 18px; resize:none;
+  transition:border-color var(--transition),box-shadow var(--transition);
+}
+textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);}
+textarea::placeholder{color:var(--text-muted);font-style:italic;}
+
+.divider{
+  display:flex;align-items:center;gap:12px;margin:18px 0;
+  font-size:10px;font-weight:600;letter-spacing:1px;
+  text-transform:uppercase;color:var(--text-muted);
+}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* ── UPLOAD ──────────────────────────────────────── */
+.upload-zone{
+  position:relative; border:1.5px dashed var(--border);
+  border-radius:var(--radius-sm); padding:22px 16px;
+  text-align:center; cursor:pointer;
+  transition:all var(--transition); background:var(--surface-2);
+}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--accent);background:var(--accent-glow);}
+.upload-zone input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.upload-icon{font-size:22px;margin-bottom:5px;}
+.upload-label{font-size:13px;color:var(--text-dim);}
+.upload-hint{font-size:11px;color:var(--text-muted);margin-top:3px;}
+#imagePreview{width:100%;max-height:180px;object-fit:contain;border-radius:8px;margin-top:12px;display:none;border:1px solid var(--border);}
+.ocr-bar{height:3px;background:var(--border);border-radius:2px;margin-top:10px;display:none;overflow:hidden;}
+.ocr-fill{height:100%;background:var(--accent);width:0%;transition:width 0.4s;}
+.ocr-status{font-size:11px;color:var(--text-muted);margin-top:5px;font-family:'DM Mono',monospace;display:none;text-align:center;}
+
+/* ── BUTTONS ─────────────────────────────────────── */
+.btn-row{display:flex;gap:10px;margin-top:20px;}
+button{font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;border:none;border-radius:var(--radius-sm);cursor:pointer;transition:all 0.2s;padding:13px 20px;}
+.btn-solve{flex:1;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;font-weight:600;letter-spacing:0.3px;box-shadow:0 4px 16px var(--accent-glow);}
+.btn-solve:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 24px var(--accent-glow);}
+.btn-solve:disabled{opacity:0.45;cursor:not-allowed;transform:none;}
+.btn-clear{background:transparent;border:1.5px solid var(--border);color:var(--text-muted);padding:13px 18px;}
+.btn-clear:hover{border-color:var(--text-muted);color:var(--text);}
+
+/* ── ERROR / LOADER ──────────────────────────────── */
+.error-box{background:var(--error-bg);border:1px solid var(--error-border);border-radius:var(--radius-sm);padding:12px 16px;font-size:13px;color:var(--error-text);margin-top:14px;display:none;}
+.loader{display:none;text-align:center;padding:30px 0;color:var(--text-muted);font-size:13px;}
+.spinner{width:28px;height:28px;border:2.5px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.75s linear infinite;margin:0 auto 12px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ── SOLUTION PANEL ──────────────────────────────── */
+.solution-panel{display:none;animation:rise 0.4s cubic-bezier(0.16,1,0.3,1);}
+@keyframes rise{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+
+/* Problem recap */
+.problem-recap{
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:18px 22px;
+  margin-bottom:10px; display:flex; align-items:flex-start; gap:14px;
+}
+.recap-icon{font-size:18px;flex-shrink:0;margin-top:2px;}
+.recap-label{font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px;}
+.recap-text{font-family:'Lora',serif;font-style:italic;font-size:15px;color:var(--text-dim);line-height:1.5;}
+
+/* Steps */
+.steps-container{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:10px;}
+.steps-header{padding:16px 22px 14px;border-bottom:1px solid var(--border-soft);display:flex;align-items:center;justify-content:space-between;}
+.steps-title{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);}
+.btn-copy-sol{background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:5px 12px;font-size:11px;border-radius:20px;cursor:pointer;transition:all 0.2s;}
+.btn-copy-sol:hover{border-color:var(--accent);color:var(--accent);}
+
+.step-item{
+  display:flex; gap:16px; padding:20px 22px;
+  border-bottom:1px solid var(--border-soft);
+  animation:fadeIn 0.35s ease both;
+  transition:background var(--transition);
+}
+.step-item:last-child{border-bottom:none;}
+.step-item:hover{background:var(--accent-glow);}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+
+.step-num{
+  flex-shrink:0; width:28px; height:28px;
+  background:var(--step-num-bg); border-radius:8px;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'DM Mono',monospace; font-size:12px; font-weight:500;
+  color:var(--step-num); margin-top:1px;
+}
+.step-content{flex:1;min-width:0;}
+.step-heading{font-size:13px;font-weight:600;color:var(--text);margin-bottom:5px;line-height:1.3;}
+.step-body{font-family:'Lora',serif;font-size:14.5px;color:var(--text-dim);line-height:1.7;margin-bottom:0;}
+
+/* KaTeX math display areas */
+.step-math-block{
+  margin-top:12px;
+  background:var(--step-num-bg);
+  border-radius:8px;
+  padding:12px 16px;
+  overflow-x:auto;
+  text-align:center;
+}
+.step-math-block .katex{color:var(--katex-color);font-size:1.1em;}
+.step-math-block .katex-display{margin:0;}
+
+.inline-math .katex{color:var(--katex-color);}
+
+/* Answer card */
+.answer-card{
+  background:var(--answer-bg); border:1.5px solid var(--answer-border);
+  border-radius:var(--radius); padding:28px 26px;
+  text-align:center; position:relative; overflow:hidden; margin-bottom:10px;
+}
+.answer-card::before{content:'';position:absolute;inset:0;background:var(--accent-glow);opacity:0.35;pointer-events:none;}
+.answer-label{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--answer-text);opacity:0.7;margin-bottom:14px;}
+.answer-math{position:relative;z-index:1;}
+.answer-math .katex{color:var(--answer-text);font-size:1.8em;}
+.answer-math .katex-display{margin:0;}
+.answer-math-fallback{font-family:'Lora',serif;font-size:24px;font-weight:600;color:var(--answer-text);}
+
+/* Insight note */
+.explanation-note{
+  background:var(--surface); border:1px solid var(--border);
+  border-left:3px solid var(--accent);
+  border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+  padding:14px 18px;
+  font-family:'Lora',serif; font-style:italic;
+  font-size:14px; color:var(--text-dim); line-height:1.6;
+}
+
+.footer-note{text-align:center;font-size:11px;color:var(--text-muted);margin-top:16px;}
+</style>
+</head>
+<body>
+
+<div class="theme-bar">
+  <div class="theme-dot active" data-t="midnight" title="Midnight" onclick="setTheme('midnight')"></div>
+  <div class="theme-dot" data-t="parchment" title="Parchment" onclick="setTheme('parchment')"></div>
+  <div class="theme-dot" data-t="ocean" title="Ocean" onclick="setTheme('ocean')"></div>
+  <div class="theme-dot" data-t="chalk" title="Chalk" onclick="setTheme('chalk')"></div>
+</div>
+
+<div class="wrap">
+  <header>
+    <div class="brand">∑ Solvr</div>
+    <p class="tagline">step-by-step solutions, beautifully rendered</p>
+  </header>
+
+  <div class="card">
+    <label class="field-label" for="mathInput">Your Problem</label>
+    <textarea id="mathInput" rows="4"
+      placeholder="e.g.  solve 3x² − 7x + 2 = 0&#10;       integrate x·sin(x) dx&#10;       A car travels 240 miles in 4 hours…"></textarea>
+
+    <div class="divider">or snap a photo</div>
+
+    <div class="upload-zone" id="uploadZone">
+      <input type="file" id="imageInput" accept="image/*">
+      <div class="upload-icon">📸</div>
+      <div class="upload-label">Click or drag an image here</div>
+      <div class="upload-hint">Claude reads your handwriting directly — instant & accurate</div>
+    </div>
+    <img id="imagePreview" alt="Preview">
+    <div class="ocr-bar" id="ocrBar"><div class="ocr-fill" id="ocrFill"></div></div>
+    <div class="ocr-status" id="ocrStatus"></div>
+
+    <div class="btn-row">
+      <button class="btn-clear" id="clearBtn">Clear</button>
+      <button class="btn-solve" id="solveBtn">Solve →</button>
+    </div>
+    <div class="error-box" id="errorBox"></div>
+  </div>
+
+  <div class="loader" id="loader">
+    <div class="spinner"></div>
+    Working through your problem…
+  </div>
+
+  <div class="solution-panel" id="solutionPanel"></div>
+  <p class="footer-note">Algebra · Calculus · Geometry · Word Problems · Statistics</p>
+</div>
+
+<script>
+/* ── Wait for KaTeX ────────────────────────────── */
+function waitForKatex(cb, tries=0) {
+  if (typeof katex !== 'undefined') { cb(); return; }
+  if (tries > 40) { console.warn('KaTeX not loaded'); cb(); return; }
+  setTimeout(() => waitForKatex(cb, tries+1), 100);
+}
+
+/* ── Theme ─────────────────────────────────────── */
+function setTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  document.querySelectorAll('.theme-dot').forEach(d => d.classList.toggle('active', d.dataset.t === t));
+  localStorage.setItem('solvr-theme', t);
+}
+setTheme(localStorage.getItem('solvr-theme') || 'midnight');
+
+/* ── DOM refs ───────────────────────────────────── */
+const mathInput    = document.getElementById('mathInput');
+const imageInput   = document.getElementById('imageInput');
+const imagePreview = document.getElementById('imagePreview');
+const solveBtn     = document.getElementById('solveBtn');
+const clearBtn     = document.getElementById('clearBtn');
+const loader       = document.getElementById('loader');
+const solutionPanel= document.getElementById('solutionPanel');
+const errorBox     = document.getElementById('errorBox');
+const ocrBar       = document.getElementById('ocrBar');
+const ocrFill      = document.getElementById('ocrFill');
+const ocrStatus    = document.getElementById('ocrStatus');
+const uploadZone   = document.getElementById('uploadZone');
+
+/* ── Drag & drop ────────────────────────────────── */
+uploadZone.addEventListener('dragover',  e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault(); uploadZone.classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f && f.type.startsWith('image/')) handleImageFile(f);
+});
+imageInput.addEventListener('change', e => { if (e.target.files[0]) handleImageFile(e.target.files[0]); });
+
+/* ── Image to base64 ─────────────────────────────── */
+function fileToBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload  = () => res(r.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+let pendingB64 = null, pendingType = null;
+
+async function handleImageFile(file) {
+  imagePreview.src = URL.createObjectURL(file);
+  imagePreview.style.display = 'block';
+  ocrBar.style.display = ocrStatus.style.display = 'block';
+  ocrStatus.textContent = 'Reading image…';
+  ocrFill.style.width = '60%';
+  try {
+    pendingB64  = await fileToBase64(file);
+    pendingType = file.type;
+    ocrFill.style.width   = '100%';
+    ocrStatus.textContent = '✓ Image ready — hit Solve';
+    mathInput.value = '';
+    hideError();
+  } catch {
+    ocrStatus.textContent = '✗ Could not read file';
+    showError('Could not read the image file.');
+  }
+}
+
+/* ── KaTeX renderer ─────────────────────────────── */
+function renderMath(latex, displayMode = false) {
+  if (typeof katex === 'undefined') return `<span>${escHtml(latex)}</span>`;
+  try {
+    return katex.renderToString(latex, {
+      displayMode,
+      throwOnError: false,
+      output: 'html',
+      trust: false
+    });
+  } catch(e) {
+    return `<span>${escHtml(latex)}</span>`;
+  }
+}
+
+/* Safer version: split on math delimiters, render each part */
+function renderRichText(raw) {
+  const parts = [];
+  const re = /(\$\$[\s\S]+?\$\$|\$[^$\n]+?\$|\\\([\s\S]+?\\\)|\\\[[\s\S]+?\\\])/g;
+  let last = 0, m;
+  while ((m = re.exec(raw)) !== null) {
+    if (m.index > last) parts.push({ type:'text', val: raw.slice(last, m.index) });
+    const tok = m[0];
+    if (tok.startsWith('$$') || tok.startsWith('\\[')) {
+      const inner = tok.startsWith('$$') ? tok.slice(2,-2) : tok.slice(2,-2);
+      parts.push({ type:'display', val: inner.trim() });
+    } else {
+      const inner = tok.startsWith('$') ? tok.slice(1,-1) : tok.slice(2,-2);
+      parts.push({ type:'inline', val: inner.trim() });
+    }
+    last = m.index + tok.length;
+  }
+  if (last < raw.length) parts.push({ type:'text', val: raw.slice(last) });
+
+  return parts.map(p => {
+    if (p.type === 'text')    return `<span>${escHtml(p.val)}</span>`;
+    if (p.type === 'inline')  return `<span class="inline-math">${renderMath(p.val, false)}</span>`;
+    if (p.type === 'display') return `<div class="step-math-block">${renderMath(p.val, true)}</div>`;
+    return '';
+  }).join('');
+}
+
+/* ── Backend API call ───────────────────────────── */
+async function callBackend(text, b64, mime) {
+  const payload = { text: text || '', image: b64 || null, mimeType: mime || null };
+  
+  const resp = await fetch('/api/solve', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+
+  if (!resp.ok) {
+    const e = await resp.json().catch(() => ({}));
+    throw new Error(e.error || `Server error ${resp.status}`);
+  }
+
+  return resp.json();
+}
+
+/* ── Build solution UI ──────────────────────────── */
+function buildSolution(sol) {
+  solutionPanel.innerHTML = '';
+
+  // 1. Problem recap
+  const recap = document.createElement('div');
+  recap.className = 'problem-recap';
+  recap.innerHTML = `
+    <div class="recap-icon">❓</div>
+    <div>
+      <div class="recap-label">Problem</div>
+      <div class="recap-text">${escHtml(sol.problem)}</div>
+    </div>`;
+  solutionPanel.appendChild(recap);
+
+  // 2. Steps
+  const stepsWrap = document.createElement('div');
+  stepsWrap.className = 'steps-container';
+
+  const hdr = document.createElement('div');
+  hdr.className = 'steps-header';
+  hdr.innerHTML = `<div class="steps-title">Step-by-step working</div><button class="btn-copy-sol" id="copyBtn">Copy all</button>`;
+  stepsWrap.appendChild(hdr);
+
+  sol.steps.forEach((step, i) => {
+    const item = document.createElement('div');
+    item.className = 'step-item';
+    item.style.animationDelay = `${i * 0.07}s`;
+
+    const bodyHtml = renderRichText(step.body || '');
+
+    let mathHtml = '';
+    if (step.math) {
+      mathHtml = `<div class="step-math-block">${renderMath(step.math, true)}</div>`;
+    }
+
+    item.innerHTML = `
+      <div class="step-num">${i + 1}</div>
+      <div class="step-content">
+        <div class="step-heading">${escHtml(step.heading)}</div>
+        <div class="step-body">${bodyHtml}</div>
+        ${mathHtml}
+      </div>`;
+    stepsWrap.appendChild(item);
+  });
+  solutionPanel.appendChild(stepsWrap);
+
+  // 3. Answer card
+  const ansCard = document.createElement('div');
+  ansCard.className = 'answer-card';
+  const answerRendered = renderMath(sol.answer || '', true);
+  ansCard.innerHTML = `
+    <div class="answer-label">Final Answer</div>
+    <div class="answer-math">${answerRendered}</div>`;
+  solutionPanel.appendChild(ansCard);
+
+  // 4. Note
+  if (sol.note) {
+    const note = document.createElement('div');
+    note.className = 'explanation-note';
+    note.innerHTML = `💡 ${renderRichText(sol.note)}`;
+    solutionPanel.appendChild(note);
+  }
+
+  solutionPanel.style.display = 'block';
+
+  // Copy all
+  document.getElementById('copyBtn').addEventListener('click', function() {
+    const lines = [`Problem: ${sol.problem}`, ''];
+    sol.steps.forEach((s, i) => {
+      lines.push(`Step ${i+1}: ${s.heading}`);
+      lines.push(s.body);
+      if (s.math) lines.push(`  ${s.math}`);
+      lines.push('');
+    });
+    lines.push(`Answer: ${sol.answer}`);
+    if (sol.note) lines.push(`\nNote: ${sol.note}`);
+    navigator.clipboard.writeText(lines.join('\n')).then(() => {
+      this.textContent = 'Copied!';
+      setTimeout(() => this.textContent = 'Copy all', 2000);
+    });
+  });
+}
+
+/* ── Solve handler ──────────────────────────────── */
+solveBtn.addEventListener('click', async () => {
+  const text = mathInput.value.trim();
+  if (!text && !pendingB64) { showError('Enter a problem or upload an image first.'); return; }
+
+  hideError();
+  solveBtn.disabled = true;
+  loader.style.display = 'block';
+  solutionPanel.style.display = 'none';
+  solutionPanel.innerHTML = '';
+
+  try {
+    const sol = await callBackend(text, pendingB64, pendingType);
+    loader.style.display = 'none';
+    waitForKatex(() => buildSolution(sol));
+  } catch (err) {
+    loader.style.display = 'none';
+    showError('Could not get solution. ' + (err.message || 'Check your connection.'));
+    console.error(err);
+  } finally {
+    solveBtn.disabled = false;
+  }
+});
+
+/* ── Clear ──────────────────────────────────────── */
+clearBtn.addEventListener('click', () => {
+  mathInput.value = '';
+  imageInput.value = '';
+  imagePreview.style.display = 'none';
+  imagePreview.src = '';
+  pendingB64 = pendingType = null;
+  solutionPanel.style.display = 'none';
+  solutionPanel.innerHTML = '';
+  ocrBar.style.display = ocrStatus.style.display = 'none';
+  ocrFill.style.width = '0%';
+  hideError();
+});
+
+mathInput.addEventListener('keydown', e => { if ((e.metaKey||e.ctrlKey) && e.key==='Enter') solveBtn.click(); });
+
+function showError(msg) { errorBox.textContent = msg; errorBox.style.display = 'block'; }
+function hideError()    { errorBox.style.display = 'none'; }
+function escHtml(s)     { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+</script>
+</body>
+</html>
