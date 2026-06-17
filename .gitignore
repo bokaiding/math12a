@@ -1,1 +1,52 @@
-(empty)
+```
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+
+# Build artifacts (if any)
+dist/
+build/
+target/
+
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Python cache (if applicable)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Coverage reports (if applicable)
+coverage/
+htmlcov/
+.coverage
+
+# IDE files (if applicable)
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Package managers
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Compressed archives (if applicable)
+*.zip
+*.tar.gz
+*.tar.xz
+*.rar
+*.7z
+
+# Local configuration files (if any)
+config.local.*
+
+```

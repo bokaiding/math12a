@@ -419,6 +419,8 @@ function renderRichText(raw) {
 }
 
 /* ── Claude API ─────────────────────────────────── */
+// API key is now stored server-side in .env file
+
 const SYSTEM_PROMPT = `You are an expert math tutor. Respond ONLY with a valid JSON object — no markdown, no fences, no preamble.
 
 JSON shape:
@@ -452,19 +454,10 @@ async function callClaude(text, b64, mime) {
       ]
     : `Solve this math problem:\n\n${text}`;
 
-  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+  const resp = await fetch('/api/solve', {
     method:'POST',
-    headers:{ 
-      'Content-Type':'application/json',
-      'x-api-key': ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01'
-    },
-    body: JSON.stringify({
-      model:'claude-sonnet-4-5-20250929',
-      max_tokens:1200,
-      system: SYSTEM_PROMPT,
-      messages:[{ role:'user', content: userContent }]
-    })
+    headers:{ 'Content-Type':'application/json' },
+    body: JSON.stringify({ text, imageBase64: b64, imageType: mime })
   });
 
   if (!resp.ok) {
