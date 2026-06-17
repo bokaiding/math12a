@@ -284,6 +284,9 @@ button{font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;border:no
 </div>
 
 <script>
+/* ── API Key - Replace with your actual key ───────── */
+const ANTHROPIC_API_KEY = 'YOUR_ANTHROPIC_API_KEY_HERE';
+
 /* ── Wait for KaTeX ────────────────────────────── */
 function waitForKatex(cb, tries=0) {
   if (typeof katex !== 'undefined') { cb(); return; }
@@ -451,9 +454,13 @@ async function callClaude(text, b64, mime) {
 
   const resp = await fetch('https://api.anthropic.com/v1/messages', {
     method:'POST',
-    headers:{ 'Content-Type':'application/json' },
+    headers:{ 
+      'Content-Type':'application/json',
+      'x-api-key': ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01'
+    },
     body: JSON.stringify({
-      model:'claude-sonnet-4-6',
+      model:'claude-sonnet-4-5-20250929',
       max_tokens:1200,
       system: SYSTEM_PROMPT,
       messages:[{ role:'user', content: userContent }]
