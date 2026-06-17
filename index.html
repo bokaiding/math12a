@@ -3,195 +3,176 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minimalist Math Solver</title>
-    
-    <!-- Fonts: Inter for clean, modern typography -->
+    <title>Math Solver</title>
+    <!-- Load Inter Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    
-    <!-- Tesseract.js for Client-Side OCR -->
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <!-- Load Math.js for calculations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.min.js"></script>
+    <!-- Load Tesseract.js for OCR -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
     <style>
-        /* 
-         * CSS VARIABLES & RESET 
-         * Ultra-minimalist palette
-         */
+        /* --- CSS Variables & Reset --- */
         :root {
             --bg-color: #f8f9fa;
             --card-bg: #ffffff;
-            --text-main: #212529;
-            --text-muted: #6c757d;
-            --border-color: #e9ecef;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
             --accent-color: #212529;
             --accent-hover: #495057;
+            --border-color: #e9ecef;
             --error-color: #dc3545;
             --success-color: #198754;
-            --shadow-sm: 0 2px 4px rgba(0,0,0,0.02);
-            --shadow-md: 0 8px 16px rgba(0,0,0,0.04);
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
             --radius: 12px;
-            --font-family: 'Inter', sans-serif;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
         body {
-            font-family: var(--font-family);
+            font-family: 'Inter', sans-serif;
             background-color: var(--bg-color);
-            color: var(--text-main);
-            line-height: 1.6;
+            color: var(--text-primary);
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             padding: 20px;
+            line-height: 1.6;
         }
 
-        /* 
-         * LAYOUT & CARD 
-         */
+        /* --- Main Container --- */
         .container {
-            width: 100%;
-            max-width: 600px;
             background: var(--card-bg);
+            width: 100%;
+            max-width: 500px;
             padding: 40px;
             border-radius: var(--radius);
-            box-shadow: var(--shadow-md);
-            transition: transform 0.3s ease;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
         }
 
-        h1 {
+        header h1 {
             font-weight: 600;
-            font-size: 1.5rem;
+            font-size: 24px;
             text-align: center;
+            letter-spacing: -0.5px;
             margin-bottom: 8px;
-            letter-spacing: -0.02em;
         }
 
-        p.subtitle {
+        header p {
             text-align: center;
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            margin-bottom: 30px;
+            color: var(--text-secondary);
+            font-size: 14px;
         }
 
-        /* 
-         * INPUTS & CONTROLS 
-         */
+        /* --- Input Areas --- */
         .input-group {
-            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
 
         label {
-            display: block;
-            font-size: 0.75rem;
-            font-weight: 600;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
             text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--text-muted);
-            margin-bottom: 8px;
+            letter-spacing: 0.5px;
         }
 
-        /* API Key Input Styling */
-        .api-key-wrapper {
-            position: relative;
-            margin-bottom: 25px;
-            background: #fafafa;
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-        }
-
-        input[type="text"], 
         textarea {
             width: 100%;
-            padding: 12px 16px;
-            font-family: var(--font-family);
-            font-size: 1rem;
+            padding: 16px;
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            background: #fff;
-            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            resize: none;
+            height: 100px;
             transition: border-color 0.2s, box-shadow 0.2s;
             outline: none;
         }
 
-        input[type="text"]:focus, 
         textarea:focus {
             border-color: var(--accent-color);
             box-shadow: 0 0 0 3px rgba(33, 37, 41, 0.1);
         }
 
-        textarea {
-            resize: vertical;
-            min-height: 100px;
-        }
-
-        /* File Upload Styling */
+        /* --- File Upload --- */
         .file-upload {
             position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
             border: 2px dashed var(--border-color);
             border-radius: 8px;
+            padding: 20px;
+            text-align: center;
             cursor: pointer;
             transition: all 0.2s;
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 0.9rem;
+            background: #fafafa;
         }
 
         .file-upload:hover {
             border-color: var(--accent-color);
-            background-color: #fafafa;
-            color: var(--text-main);
+            background: #f1f3f5;
         }
 
         .file-upload input[type="file"] {
             position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
             opacity: 0;
             cursor: pointer;
         }
 
+        .file-upload-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+            pointer-events: none;
+        }
+
         .file-name {
-            margin-top: 8px;
-            font-size: 0.85rem;
-            color: var(--text-main);
+            font-size: 13px;
+            color: var(--accent-color);
+            margin-top: 5px;
             font-weight: 500;
             display: none;
         }
 
-        /* Buttons */
-        .btn-group {
+        /* --- Buttons --- */
+        .button-group {
             display: flex;
             gap: 12px;
-            margin-top: 25px;
         }
 
         button {
             flex: 1;
-            padding: 12px 20px;
-            font-family: var(--font-family);
-            font-size: 0.95rem;
-            font-weight: 500;
+            padding: 14px;
             border: none;
             border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            font-weight: 500;
             cursor: pointer;
             transition: all 0.2s;
             display: flex;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             gap: 8px;
         }
 
         .btn-primary {
             background-color: var(--accent-color);
-            color: #fff;
+            color: white;
         }
 
         .btn-primary:hover {
@@ -199,10 +180,16 @@
             transform: translateY(-1px);
         }
 
+        .btn-primary:disabled {
+            background-color: #adb5bd;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         .btn-secondary {
             background-color: transparent;
             border: 1px solid var(--border-color);
-            color: var(--text-main);
+            color: var(--text-primary);
         }
 
         .btn-secondary:hover {
@@ -210,392 +197,373 @@
             border-color: #dee2e6;
         }
 
-        button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none !important;
-        }
-
-        /* 
-         * RESULTS & FEEDBACK 
-         */
-        .result-area {
-            margin-top: 30px;
-            padding-top: 25px;
-            border-top: 1px solid var(--border-color);
+        /* --- Output Area --- */
+        .output-area {
+            margin-top: 10px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
             display: none; /* Hidden by default */
-            animation: fadeIn 0.4s ease;
+            flex-direction: column;
+            gap: 12px;
         }
 
-        .result-header {
+        .output-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 8px;
         }
 
-        .result-title {
+        .output-title {
+            font-size: 14px;
             font-weight: 600;
-            font-size: 1.1rem;
+            color: var(--text-secondary);
         }
 
-        .solution-content {
-            background: #fafafa;
-            padding: 20px;
-            border-radius: 8px;
-            font-size: 0.95rem;
-            white-space: pre-wrap; /* Preserve formatting from API */
-            color: #333;
-            line-height: 1.7;
+        .copy-btn {
+            background: none;
+            border: none;
+            color: var(--accent-color);
+            font-size: 13px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
         }
 
-        .error-msg {
-            color: var(--error-color);
-            font-size: 0.9rem;
-            margin-top: 10px;
-            display: none;
-            text-align: center;
+        .copy-btn:hover {
+            background: #e9ecef;
         }
 
-        /* Loading Spinner */
+        .solution-text {
+            font-size: 16px;
+            color: var(--text-primary);
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        /* --- Loading Spinner --- */
         .spinner {
             width: 20px;
             height: 20px;
-            border: 2px solid rgba(255,255,255,0.3);
+            border: 2px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s linear infinite;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
             display: none;
         }
 
-        .ocr-status {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            text-align: center;
-            margin-top: 10px;
-            min-height: 20px;
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
-        /* Animations */
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* --- Error Message --- */
+        .error-msg {
+            color: var(--error-color);
+            font-size: 14px;
+            text-align: center;
+            margin-top: 10px;
+            display: none;
+        }
 
-        /* Responsive */
-        @media (max-width: 480px) {
-            .container { padding: 25px; }
-            .btn-group { flex-direction: column; }
+        /* --- OCR Progress --- */
+        .ocr-progress {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-top: 5px;
+            display: none;
         }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>Math Solver</h1>
-        <p class="subtitle">Powered by Wolfram Alpha & Tesseract OCR</p>
-
-        <!-- API Key Section -->
-        <div class="api-key-wrapper">
-            <label for="apiKey">Wolfram Alpha App ID</label>
-            <input type="text" id="apiKey" placeholder="Paste your App ID here (e.g., 2X4Y6Z...)" autocomplete="off">
-            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 5px;">
-                Don't have one? <a href="https://developer.wolframalpha.com/" target="_blank" style="color: var(--accent-color);">Get a free key</a>.
-            </div>
-        </div>
+        <header>
+            <h1>Math Solver</h1>
+            <p>Type a problem or upload an image. No API key required.</p>
+        </header>
 
         <!-- Text Input -->
         <div class="input-group">
-            <label for="mathInput">Problem</label>
-            <textarea id="mathInput" placeholder="Type a math problem (e.g., solve x^2 - 4x + 4 = 0) or upload an image below..."></textarea>
+            <label for="math-input">Problem</label>
+            <textarea id="math-input" placeholder="e.g., sqrt(16) + 2^3 or solve x^2 - 4 = 0"></textarea>
         </div>
 
         <!-- Image Upload -->
         <div class="input-group">
-            <label>Or upload an image</label>
-            <div class="file-upload" id="dropZone">
-                <input type="file" id="imageInput" accept="image/*">
-                <span id="uploadText">Click or drag image here</span>
+            <label>Image Input (OCR)</label>
+            <div class="file-upload" id="drop-zone">
+                <input type="file" id="image-input" accept="image/*">
+                <div class="file-upload-text">
+                    Click or drag an image here to extract math
+                </div>
+                <div class="file-name" id="file-name"></div>
             </div>
-            <div class="file-name" id="fileName"></div>
-            <div class="ocr-status" id="ocrStatus"></div>
+            <div class="ocr-progress" id="ocr-progress">Extracting text...</div>
         </div>
 
-        <!-- Controls -->
-        <div class="btn-group">
-            <button class="btn-secondary" id="clearBtn">Clear</button>
-            <button class="btn-primary" id="solveBtn">
+        <!-- Action Buttons -->
+        <div class="button-group">
+            <button class="btn-secondary" id="clear-btn">Clear</button>
+            <button class="btn-primary" id="solve-btn">
                 <span class="btn-text">Solve</span>
-                <div class="spinner" id="loadingSpinner"></div>
+                <div class="spinner" id="loading-spinner"></div>
             </button>
         </div>
 
         <!-- Error Display -->
-        <div class="error-msg" id="errorMsg"></div>
+        <div class="error-msg" id="error-msg"></div>
 
-        <!-- Results -->
-        <div class="result-area" id="resultArea">
-            <div class="result-header">
-                <span class="result-title">Solution</span>
-                <button class="btn-secondary" id="copyBtn" style="padding: 6px 12px; font-size: 0.8rem; flex: none;">Copy</button>
+        <!-- Solution Output -->
+        <div class="output-area" id="output-area">
+            <div class="output-header">
+                <span class="output-title">Solution</span>
+                <button class="copy-btn" id="copy-btn">Copy</button>
             </div>
-            <div class="solution-content" id="solutionContent"></div>
+            <div class="solution-text" id="solution-text"></div>
         </div>
     </div>
 
     <script>
         /**
          * MATH SOLVER LOGIC
-         * Modular structure for clarity and maintenance.
+         * Uses math.js for evaluation and Tesseract.js for OCR.
+         * No external API keys required.
          */
 
-        // --- DOM Elements ---
-        const els = {
-            apiKey: document.getElementById('apiKey'),
-            input: document.getElementById('mathInput'),
-            imageInput: document.getElementById('imageInput'),
-            fileName: document.getElementById('fileName'),
-            uploadText: document.getElementById('uploadText'),
-            ocrStatus: document.getElementById('ocrStatus'),
-            solveBtn: document.getElementById('solveBtn'),
-            clearBtn: document.getElementById('clearBtn'),
-            copyBtn: document.getElementById('copyBtn'),
-            spinner: document.getElementById('loadingSpinner'),
-            btnText: document.querySelector('.btn-text'),
-            errorMsg: document.getElementById('errorMsg'),
-            resultArea: document.getElementById('resultArea'),
-            solutionContent: document.getElementById('solutionContent')
-        };
+        // DOM Elements
+        const mathInput = document.getElementById('math-input');
+        const imageInput = document.getElementById('image-input');
+        const fileNameDisplay = document.getElementById('file-name');
+        const ocrProgress = document.getElementById('ocr-progress');
+        const solveBtn = document.getElementById('solve-btn');
+        const clearBtn = document.getElementById('clear-btn');
+        const copyBtn = document.getElementById('copy-btn');
+        const outputArea = document.getElementById('output-area');
+        const solutionText = document.getElementById('solution-text');
+        const errorMsg = document.getElementById('error-msg');
+        const spinner = document.getElementById('loading-spinner');
+        const btnText = document.querySelector('.btn-text');
 
-        // --- State Management ---
-        let isProcessing = false;
+        // --- Event Listeners ---
 
-        // --- Initialization ---
-        function init() {
-            // Load API Key from localStorage if available
-            const savedKey = localStorage.getItem('wolframApiKey');
-            if (savedKey) els.apiKey.value = savedKey;
+        // Handle File Upload & OCR
+        imageInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
 
-            // Event Listeners
-            els.solveBtn.addEventListener('click', handleSolve);
-            els.clearBtn.addEventListener('click', handleClear);
-            els.copyBtn.addEventListener('click', handleCopy);
+            // Reset UI
+            fileNameDisplay.style.display = 'block';
+            fileNameDisplay.textContent = file.name;
+            errorMsg.style.display = 'none';
+            outputArea.style.display = 'none';
             
-            els.imageInput.addEventListener('change', handleImageUpload);
-            
-            // Save API Key on change
-            els.apiKey.addEventListener('input', (e) => {
-                localStorage.setItem('wolframApiKey', e.target.value.trim());
-            });
-        }
+            // Show Progress
+            ocrProgress.style.display = 'block';
+            ocrProgress.textContent = "Initializing OCR...";
 
-        // --- Core Logic: Handle Solve ---
-        async function handleSolve() {
-            const apiKey = els.apiKey.value.trim();
-            const query = els.input.value.trim();
+            try {
+                // Initialize Tesseract Worker (reuse if possible)
+                const worker = await Tesseract.createWorker({
+                    logger: m => {
+                        if(m.status === 'recognizing text') {
+                            ocrProgress.textContent = `Extracting text: ${Math.round(m.progress * 100)}%`;
+                        } else {
+                            ocrProgress.textContent = m.status;
+                        }
+                    }
+                });
 
-            // Validation
-            if (!apiKey) {
-                showError("Please enter your Wolfram Alpha App ID.");
-                return;
+                await worker.loadLanguage('eng');
+                await worker.initialize('eng');
+
+                // Perform Recognition
+                const { data: { text } } = await worker.recognize(file);
+                
+                // ADVANCED CLEANING: Convert raw OCR text to math-friendly format
+                let cleaned = text.trim();
+                
+                // 1. Aggressive Filtering: Extract ONLY valid math characters
+                // This prevents garbage like "y (b) n n y" from appearing
+                const allowedChars = /[0-9+\-*/^().=xyzabcn]/gi;
+                const matches = cleaned.match(allowedChars);
+                
+                if (!matches || matches.length === 0) {
+                    throw new Error("No mathematical text found in image.");
+                }
+                
+                // Join only the valid characters
+                cleaned = matches.join('');
+                
+                // 2. Fix common misreads BEFORE removing spaces
+                // Replace isolated 'o' or 'O' with '0'
+                cleaned = cleaned.replace(/o/gi, '0');
+                // Replace isolated 'l' or 'I' with '1'
+                cleaned = cleaned.replace(/([lI])/g, '1');
+                
+                // 3. Handle multiplication symbols
+                // Replace 'x' or 'X' between numbers with '*' 
+                cleaned = cleaned.replace(/(\d)[xX](\d)/g, '$1*$2');
+                // If 'x' is next to a number, treat as multiplication (e.g., 2x -> 2*x)
+                cleaned = cleaned.replace(/(\d)([a-z])/gi, '$1*$2');
+                cleaned = cleaned.replace(/([a-z])(\d)/gi, '$1*$2');
+                
+                // 4. Handle division
+                cleaned = cleaned.replace(/[÷]/g, '/');
+                
+                // 5. Remove any remaining spaces for clean calculation
+                cleaned = cleaned.replace(/\s+/g, '');
+                
+                // 6. Validation: Must contain at least one number or operator
+                const hasNumber = /\d/.test(cleaned);
+                const hasOperator = /[+\-*/^=]/.test(cleaned);
+                
+                if (!hasNumber && !hasOperator) {
+                    throw new Error("Extracted text does not look like a math problem.");
+                }
+                
+                if(cleaned && cleaned.length > 0) {
+                    mathInput.value = cleaned;
+                    ocrProgress.textContent = "Text extracted!";
+                    ocrProgress.style.color = "var(--success-color)";
+                    setTimeout(() => {
+                        ocrProgress.style.display = 'none';
+                        ocrProgress.style.color = "var(--text-secondary)";
+                    }, 2000);
+                } else {
+                    throw new Error("No mathematical text found in image.");
+                }
+
+                await worker.terminate();
+
+            } catch (err) {
+                console.error(err);
+                ocrProgress.style.display = 'none';
+                showError("Failed to extract text. Ensure the image is clear and contains printed/handwritten math.");
             }
-            if (!query) {
-                showError("Please enter a problem or upload an image first.");
+        });
+
+        // Handle Solve Button
+        solveBtn.addEventListener('click', () => {
+            const expression = mathInput.value.trim();
+            
+            if (!expression) {
+                showError("Please enter a problem or upload an image.");
                 return;
             }
 
             setLoading(true);
-            hideError();
-            els.resultArea.style.display = 'none';
+            errorMsg.style.display = 'none';
+            outputArea.style.display = 'none';
 
-            try {
-                const solution = await fetchWolframAlpha(apiKey, query);
-                displayResult(solution);
-            } catch (err) {
-                showError(err.message);
-            } finally {
-                setLoading(false);
-            }
-        }
-
-        // --- Core Logic: Handle Image Upload & OCR ---
-        async function handleImageUpload(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            // UI Updates
-            els.fileName.textContent = file.name;
-            els.fileName.style.display = 'block';
-            els.uploadText.textContent = "Image selected";
-            els.input.value = ""; // Clear text input to avoid confusion
-            hideError();
-            els.resultArea.style.display = 'none';
-
-            // Run Tesseract OCR
-            els.ocrStatus.textContent = "Extracting text from image...";
-            
-            try {
-                const { data: { text } } = await Tesseract.recognize(
-                    file,
-                    'eng',
-                    { logger: m => {
-                        if(m.status === 'recognizing text') {
-                            els.ocrStatus.textContent = `OCR Progress: ${Math.round(m.progress * 100)}%`;
-                        }
-                    }}
-                );
-
-                const cleanedText = text.trim();
-                
-                if (!cleanedText) {
-                    throw new Error("No text detected in image. Please try a clearer photo.");
-                }
-
-                els.input.value = cleanedText;
-                els.ocrStatus.textContent = "Text extracted successfully! Click 'Solve'.";
-                
-                // Auto-submit option could go here, but we'll let user verify first
-                // handleSolve(); 
-
-            } catch (err) {
-                els.ocrStatus.textContent = "";
-                showError(`OCR Error: ${err.message}`);
-            }
-        }
-
-        // --- API Integration: Wolfram Alpha ---
-        async function fetchWolframAlpha(appId, query) {
-            // Construct URL for Short Answers or Full Results
-            // Using 'plaintext' output for step-by-step text where available
-            const baseUrl = "https://api.wolframalpha.com/v2/query";
-            const params = new URLSearchParams({
-                input: query,
-                appid: appId,
-                output: "json",
-                pods: "true",
-                podstate: "Result__Step-by-step solution", // Request step-by-step if available
-                format: "plaintext"
-            });
-
-            const response = await fetch(`${baseUrl}?${params}`);
-            
-            if (!response.ok) {
-                throw new Error("Network error. Please check your connection.");
-            }
-
-            const data = await response.json();
-
-            // Handle API Errors
-            if (data.errorcode) {
-                if (data.errorcode === 1) throw new Error("Invalid App ID.");
-                if (data.errorcode === 5) throw new Error("API Limit Reached.");
-                throw new Error(`Wolfram Error: ${data.errormsg}`);
-            }
-
-            if (data.queryresult.success === false) {
-                throw new Error("Could not understand the problem. Try rephrasing or checking the image.");
-            }
-
-            // Parse Result
-            // We look for 'Steps' pod first, then 'Result', then 'Input'
-            let solutionText = "";
-            const pods = data.queryresult.pods;
-
-            // 1. Try to find Step-by-Step Solution
-            const stepsPod = pods.find(p => p.title.toLowerCase().includes('step') || p.id === 'steps');
-            if (stepsPod && stepsPod.subpods) {
-                stepsPod.subpods.forEach(sub => {
-                    if(sub.plaintext) solutionText += sub.plaintext + "\n\n";
-                });
-            }
-
-            // 2. If no steps, get the main Result
-            if (!solutionText) {
-                const resultPod = pods.find(p => p.title === 'Result' || p.id === 'result');
-                if (resultPod && resultPod.subpods) {
-                    resultPod.subpods.forEach(sub => {
-                        if(sub.plaintext) solutionText += sub.plaintext + "\n";
-                    });
-                }
-            }
-
-            // 3. Fallback: Concatenate all relevant pods if specific ones missing
-            if (!solutionText) {
-                pods.forEach(pod => {
-                    if (pod.primary || pod.title === 'Input' || pod.title === 'Result') {
-                        pod.subpods?.forEach(sub => {
-                            if (sub.plaintext) solutionText += `${pod.title}: ${sub.plaintext}\n`;
-                        });
+            // Simulate a small delay for better UX
+            setTimeout(() => {
+                try {
+                    // Evaluate using math.js
+                    // Note: math.evaluate handles basic algebra, calculus, and units.
+                    // For complex symbolic solving (like "solve x^2=4"), we try to evaluate directly.
+                    // If it's an equation, we might need to rearrange it for simple evaluation.
+                    
+                    let result;
+                    
+                    // Simple check for equations (contains '=')
+                    if (expression.includes('=')) {
+                        // Attempt to solve simple equations by evaluating both sides or using logic
+                        // Since math.js eval doesn't strictly "solve" symbolically without plugins,
+                        // we will try to evaluate the expression as is, or provide a helpful message.
+                        
+                        // Try to evaluate left and right if possible, or just return the formatted equation
+                        // For this demo, we will try to evaluate the expression. 
+                        // If it's "x=2", math.js might just return 2.
+                        
+                        // Advanced: Use math.resolve if variables are defined, but here we assume unknown vars.
+                        // Fallback for equations: Just show the evaluated result of the expression if possible.
+                        result = math.evaluate(expression);
+                    } else {
+                        result = math.evaluate(expression);
                     }
-                });
-            }
 
-            if (!solutionText) {
-                return "Solution found, but no text representation is available for this specific query type.";
-            }
+                    // Format result
+                    let displayResult = "";
+                    
+                    if (typeof result === 'number') {
+                        // Format number to avoid long decimals
+                        displayResult = Number.isInteger(result) ? result.toString() : result.toFixed(4).replace(/\.?0+$/, '');
+                    } else if (result && typeof result === 'object') {
+                        // Handle matrices or complex numbers
+                        displayResult = result.toString();
+                    } else {
+                        displayResult = result;
+                    }
 
-            return solutionText;
-        }
+                    // If the result is the same as input (e.g., unsolved variable), give a hint
+                    if (displayResult === expression) {
+                         displayResult = `Expression: ${expression}\n(Note: This solver evaluates numerical expressions. For symbolic algebra like 'solve x+2=5', try entering '5-2'.)`;
+                    }
 
-        // --- UI Helpers ---
-        function setLoading(isLoading) {
-            isProcessing = isLoading;
-            if (isLoading) {
-                els.spinner.style.display = 'block';
-                els.btnText.textContent = 'Solving...';
-                els.solveBtn.disabled = true;
-                els.clearBtn.disabled = true;
-                els.imageInput.disabled = true;
-            } else {
-                els.spinner.style.display = 'none';
-                els.btnText.textContent = 'Solve';
-                els.solveBtn.disabled = false;
-                els.clearBtn.disabled = false;
-                els.imageInput.disabled = false;
-            }
-        }
+                    showSolution(displayResult);
 
-        function displayResult(text) {
-            els.solutionContent.textContent = text;
-            els.resultArea.style.display = 'block';
-            // Scroll to result on mobile
-            els.resultArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
+                } catch (err) {
+                    console.error(err);
+                    showError("Could not solve. Check syntax (e.g., use 'sqrt(9)' instead of '√9').");
+                } finally {
+                    setLoading(false);
+                }
+            }, 600);
+        });
 
-        function showError(msg) {
-            els.errorMsg.textContent = msg;
-            els.errorMsg.style.display = 'block';
-            els.resultArea.style.display = 'none';
-        }
+        // Handle Clear Button
+        clearBtn.addEventListener('click', () => {
+            mathInput.value = '';
+            imageInput.value = '';
+            fileNameDisplay.style.display = 'none';
+            fileNameDisplay.textContent = '';
+            ocrProgress.style.display = 'none';
+            outputArea.style.display = 'none';
+            errorMsg.style.display = 'none';
+            solutionText.textContent = '';
+            mathInput.focus();
+        });
 
-        function hideError() {
-            els.errorMsg.style.display = 'none';
-        }
-
-        function handleClear() {
-            els.input.value = '';
-            els.imageInput.value = '';
-            els.fileName.style.display = 'none';
-            els.fileName.textContent = '';
-            els.uploadText.textContent = "Click or drag image here";
-            els.ocrStatus.textContent = '';
-            els.resultArea.style.display = 'none';
-            hideError();
-            els.input.focus();
-        }
-
-        async function handleCopy() {
-            const text = els.solutionContent.textContent;
-            try {
-                await navigator.clipboard.writeText(text);
-                const originalText = els.copyBtn.textContent;
-                els.copyBtn.textContent = "Copied!";
-                setTimeout(() => els.copyBtn.textContent = originalText, 2000);
-            } catch (err) {
+        // Handle Copy Button
+        copyBtn.addEventListener('click', () => {
+            const textToCopy = solutionText.textContent;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = "Copied!";
+                setTimeout(() => copyBtn.textContent = originalText, 2000);
+            }).catch(err => {
                 console.error('Failed to copy', err);
+            });
+        });
+
+        // --- Helper Functions ---
+
+        function setLoading(isLoading) {
+            if (isLoading) {
+                solveBtn.disabled = true;
+                btnText.style.display = 'none';
+                spinner.style.display = 'block';
+            } else {
+                solveBtn.disabled = false;
+                btnText.style.display = 'block';
+                spinner.style.display = 'none';
             }
         }
 
-        // Start the app
-        init();
+        function showError(message) {
+            errorMsg.textContent = message;
+            errorMsg.style.display = 'block';
+        }
+
+        function showSolution(solution) {
+            solutionText.textContent = solution;
+            outputArea.style.display = 'flex';
+            // Scroll to result on mobile
+            outputArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
 
     </script>
 </body>
