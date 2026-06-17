@@ -284,9 +284,6 @@ button{font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;border:no
 </div>
 
 <script>
-/* ── API Key - Replace with your actual key ───────── */
-const ANTHROPIC_API_KEY = 'YOUR_ANTHROPIC_API_KEY_HERE';
-
 /* ── Wait for KaTeX ────────────────────────────── */
 function waitForKatex(cb, tries=0) {
   if (typeof katex !== 'undefined') { cb(); return; }
@@ -326,7 +323,7 @@ uploadZone.addEventListener('drop', e => {
 });
 imageInput.addEventListener('change', e => { if (e.target.files[0]) handleImageFile(e.target.files[0]); });
 
-/* ── Image → base64 ─────────────────────────────── */
+/* ── Image to base64 ─────────────────────────────── */
 function fileToBase64(file) {
   return new Promise((res, rej) => {
     const r = new FileReader();
@@ -372,28 +369,9 @@ function renderMath(latex, displayMode = false) {
   }
 }
 
-/* Render a string that may contain inline \( \) or $…$ math */
-function renderMixed(text) {
-  if (typeof katex === 'undefined') return escHtml(text);
-  // Handle display math $$…$$ first
-  text = text.replace(/\$\$([^$]+)\$\$/g, (_, m) => renderMath(m.trim(), true));
-  // Handle inline $…$
-  text = text.replace(/\$([^$\n]+)\$/g, (_, m) => `<span class="inline-math">${renderMath(m.trim(), false)}</span>`);
-  // Handle \( … \)
-  text = text.replace(/\\\(([^)]+)\\\)/g, (_, m) => `<span class="inline-math">${renderMath(m.trim(), false)}</span>`);
-  // Handle \[ … \]
-  text = text.replace(/\\\[([^\]]+)\\\]/g, (_, m) => renderMath(m.trim(), true));
-  // Escape remaining plain text nodes
-  return text.replace(/(?<!\=)(?<!<[^>]*)([^<>{}]+)(?![^<]*>)/g, s => {
-    // only escape if it looks like plain text (no html tags)
-    return s;
-  });
-}
-
 /* Safer version: split on math delimiters, render each part */
 function renderRichText(raw) {
   const parts = [];
-  // Split on $$...$$, $...$, \(...\), \[...\]
   const re = /(\$\$[\s\S]+?\$\$|\$[^$\n]+?\$|\\\([\s\S]+?\\\)|\\\[[\s\S]+?\\\])/g;
   let last = 0, m;
   while ((m = re.exec(raw)) !== null) {
@@ -418,56 +396,22 @@ function renderRichText(raw) {
   }).join('');
 }
 
-/* ── Claude API ─────────────────────────────────── */
-// API key is now stored server-side in .env file
-
-const SYSTEM_PROMPT = `You are an expert math tutor. Respond ONLY with a valid JSON object — no markdown, no fences, no preamble.
-
-JSON shape:
-{
-  "problem": "restate the problem in one clear sentence",
-  "steps": [
-    {
-      "heading": "short action title",
-      "body": "plain-English explanation of what you do and why (you may embed inline LaTeX using $...$ syntax)",
-      "math": "the key LaTeX expression for this step — use display math, e.g. x = \\\\frac{-b \\\\pm \\\\sqrt{b^2 - 4ac}}{2a}"
-    }
-  ],
-  "answer": "the final answer as a LaTeX expression, e.g. x = 3 \\\\text{ and } x = \\\\frac{1}{3}",
-  "note": "one genuinely useful tip, shortcut, or common pitfall — plain English"
-}
-
-CRITICAL rules:
-- ALL mathematical expressions MUST be valid KaTeX/LaTeX
-- Use \\frac{a}{b} for fractions, \\sqrt{x} for roots, x^{2} for powers, \\pm for ±, \\int for integrals, \\infty for infinity, \\theta \\pi \\alpha etc for Greek
-- "math" field: always a single LaTeX string rendered in display mode (no surrounding $$ needed)
-- "answer" field: LaTeX string, will be rendered large — keep it concise
-- "body" fields: plain English; embed short inline math with $...$ when helpful
-- 3–7 steps; more only if genuinely needed
-- Return ONLY the raw JSON object`;
-
-async function callClaude(text, b64, mime) {
-  const userContent = b64
-    ? [
-        { type:'image', source:{ type:'base64', media_type: mime, data: b64 } },
-        { type:'text',  text: text ? `Solve the math problem in this image. Extra context: ${text}` : 'Read and solve the math problem in this image.' }
-      ]
-    : `Solve this math problem:\n\n${text}`;
-
+/* ── Backend API call ───────────────────────────── */
+async function callBackend(text, b64, mime) {
+  const payload = { text: text || '', image: b64 || null, mimeType: mime || null };
+  
   const resp = await fetch('/api/solve', {
-    method:'POST',
-    headers:{ 'Content-Type':'application/json' },
-    body: JSON.stringify({ text, imageBase64: b64, imageType: mime })
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
   });
 
   if (!resp.ok) {
-    const e = await resp.json().catch(()=>({}));
-    throw new Error(e.error?.message || `API error ${resp.status}`);
+    const e = await resp.json().catch(() => ({}));
+    throw new Error(e.error || `Server error ${resp.status}`);
   }
 
-  const data = await resp.json();
-  const raw  = (data.content?.[0]?.text || '').replace(/^```json\s*/i,'').replace(/```\s*$/,'').trim();
-  return JSON.parse(raw);
+  return resp.json();
 }
 
 /* ── Build solution UI ──────────────────────────── */
@@ -499,10 +443,8 @@ function buildSolution(sol) {
     item.className = 'step-item';
     item.style.animationDelay = `${i * 0.07}s`;
 
-    // Render body with possible inline math
     const bodyHtml = renderRichText(step.body || '');
 
-    // Render step math block
     let mathHtml = '';
     if (step.math) {
       mathHtml = `<div class="step-math-block">${renderMath(step.math, true)}</div>`;
@@ -538,7 +480,7 @@ function buildSolution(sol) {
 
   solutionPanel.style.display = 'block';
 
-  // Copy all (plain text)
+  // Copy all
   document.getElementById('copyBtn').addEventListener('click', function() {
     const lines = [`Problem: ${sol.problem}`, ''];
     sol.steps.forEach((s, i) => {
@@ -568,12 +510,12 @@ solveBtn.addEventListener('click', async () => {
   solutionPanel.innerHTML = '';
 
   try {
-    const sol = await callClaude(text, pendingB64, pendingType);
+    const sol = await callBackend(text, pendingB64, pendingType);
     loader.style.display = 'none';
     waitForKatex(() => buildSolution(sol));
   } catch (err) {
     loader.style.display = 'none';
-    showError('Could not parse the solution. ' + (err.message || 'Check your connection.'));
+    showError('Could not get solution. ' + (err.message || 'Check your connection.'));
     console.error(err);
   } finally {
     solveBtn.disabled = false;
